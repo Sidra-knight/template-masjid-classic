@@ -49,7 +49,7 @@ ul.appendChild(li);
 
 
 // Gallery
-const gal = await loadJSON('/data/gallery.json') || [];
+const gal = await loadJSON('data/gallery.json') || [];
 const g = document.getElementById('gallery');
 gal.forEach(x => {
 const col = document.createElement('div'); col.className = 'col';
@@ -59,7 +59,7 @@ g.appendChild(col);
 
 
 // Links
-const links = await loadJSON('/data/links.json') || {};
+const links = await loadJSON('data/links.json') || {};
 const linkMap = { donations: 'Donate', facebook: 'Facebook', instagram: 'Instagram', youtube: 'YouTube', website: 'Website' };
 const l = document.getElementById('links');
 Object.entries(linkMap).forEach(([k,label]) => {
