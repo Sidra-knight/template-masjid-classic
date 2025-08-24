@@ -40,10 +40,10 @@ jamaah: null
 
 
 export async function getPrayerData() {
-const cfg = await loadJSON('/data/config.json');
-const useCsv = await headExists('/data/timetable.csv');
+const cfg = await loadJSON('data/config.json');
+const useCsv = await headExists('data/timetable.csv');
 try {
-const result = useCsv ? await getCsvTimes('/data/timetable.csv', cfg.timezone) : await getApiTimes(cfg);
+const result = useCsv ? await getCsvTimes('data/timetable.csv', cfg.timezone) : await getApiTimes(cfg);
 return { cfg, ...result };
 } catch (e) {
 console.error(e);
