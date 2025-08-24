@@ -1,71 +1,95 @@
-import { getPrayerData } from './prayers.js';
-const j = jamaah ? `<div class="small text-muted">Jama’ah: ${jamaah}</div>` : '';
-return `<div class="col"><div class="card h-100"><div class="card-body">
-<div class="small text-muted">${name}</div>
-<div class="fs-4">${time||'-'}</div>
-${j}
-</div></div></div>`;
-}
+(async function () {
+  try {
+    const cfg = await fetchJSON("data/config.json");
+    // Brand
+    document.getElementById("site-title").textContent = cfg.name || "Masjid";
+    document.getElementById("brand-name").textContent = cfg.name || "Masjid";
+    if (cfg.brand && cfg.brand.logo) {
+      document.getElementById("brand-logo").src = cfg.brand.logo; // relative path like assets/logo.svg
+    }
+    // Contacts & links
+    if (cfg.contacts?.email) {
+      const el = document.getElementById("contact-email");
+      el.classList.remove("d-none");
+      el.href = `mailto:${cfg.contacts.email}`;
+      el.textContent = cfg.contacts.email;
+    }
+    if (cfg.contacts?.phone) {
+      const el = document.getElementById("contact-phone");
+      el.classList.remove("d-none");
+      el.href = `tel:${cfg.contacts.phone}`;
+      el.textContent = cfg.contacts.phone;
+    }
+    if (cfg.links?.donate) {
+      const el = document.getElementById("links-donate");
+      el.classList.remove("d-none");
+      el.href = cfg.links.donate;
+    }
+    document.getElementById("address").textContent = cfg.address || "";
+    document.getElementById("foot-contact").textContent = cfg.contacts?.email || cfg.contacts?.phone || "";
 
+    // Today label
+    const today = new Date();
+    const fmt = today.toLocaleDateString(cfg.timezone || "Europe/London", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+    document.getElementById("today-label").textContent = fmt;
 
-(async () => {
-const { cfg, date, timings, jamaah, source } = await getPrayerData();
+    // Announcements
+    const anns = await fetchJSON("data/announcements.json").catch(() => []);
+    renderAnnouncements(anns);
 
+    // Gallery
+    const gallery = await fetchJSON("data/gallery.json").catch(() => []);
+    renderGallery(gallery);
 
-// Header & footer
-el('name').textContent = cfg.name;
-el('name-foot').textContent = cfg.name;
-el('year').textContent = new Date().getFullYear();
-el('address').textContent = cfg.address || '';
-if (cfg.brand?.logo) el('logo').src = cfg.brand.logo;
-const phone = cfg.contacts?.phone; if (phone) { el('phone').textContent = phone; el('phone').href = `tel:${phone}`; }
-const email = cfg.contacts?.email; if (email) { el('email').textContent = email; el('email').href = `mailto:${email}`; }
-
-
-// Prayers
-el('today').textContent = date;
-const names = ['Fajr','Sunrise','Dhuhr','Asr','Maghrib','Isha'];
-const grid = names.filter(n => n!=='Sunrise').map(n => card(n, timings[n], jamaah?.[n]));
-document.getElementById('prayers').innerHTML = grid.join('');
-if (cfg.jummah_times?.length) {
-el('jummah').textContent = `Jumu’ah: ${cfg.jummah_times.join(' & ')}`;
-}
-el('prayer-note').textContent = source === 'csv' ? 'Times from local timetable.' : 'Times from public API.';
-
-
-// Announcements
-const anns = await loadJSON('/data/announcements.json') || [];
-anns.sort((a,b) => (b.pin - a.pin) || (b.start?.localeCompare(a.start)) || 0);
-const ul = document.getElementById('announcements');
-if (!anns.length) ul.innerHTML = '<li class="list-group-item">No announcements right now.</li>';
-anns.forEach(a => {
-const dates = a.start ? (a.end && a.end!==a.start ? `${a.start} – ${a.end}` : a.start) : '';
-const pin = a.pin ? '<span class="badge text-bg-warning ms-2">Pinned</span>' : '';
-const li = document.createElement('li');
-li.className = 'list-group-item';
-li.innerHTML = `<strong>${a.title}</strong>${pin}<div class="small text-muted mb-1">${dates}</div><div>${a.body}</div>`;
-ul.appendChild(li);
-});
-
-
-// Gallery
-const gal = await loadJSON('data/gallery.json') || [];
-const g = document.getElementById('gallery');
-gal.forEach(x => {
-const col = document.createElement('div'); col.className = 'col';
-col.innerHTML = `<div class="card h-100"><img src="${x.src}" class="card-img-top" alt="${x.alt||''}"><div class="card-body"><div class="small">${x.caption||''}</div></div></div>`;
-g.appendChild(col);
-});
-
-
-// Links
-const links = await loadJSON('data/links.json') || {};
-const linkMap = { donations: 'Donate', facebook: 'Facebook', instagram: 'Instagram', youtube: 'YouTube', website: 'Website' };
-const l = document.getElementById('links');
-Object.entries(linkMap).forEach(([k,label]) => {
-if (!links[k]) return;
-const li = document.createElement('li'); li.className = 'list-inline-item me-3';
-li.innerHTML = `<a href="${links[k]}" target="_blank" rel="noopener">${label}</a>`;
-l.appendChild(li);
-});
+    // Prayer times (CSV-driven)
+    const times = await loadTodayFromCSV("data/timetable.csv");
+    renderPrayerTimes(times);
+  } catch (e) {
+    console.error(e);
+  }
 })();
+
+function renderAnnouncements(items) {
+  const wrap = document.getElementById("ann-list");
+  if (!Array.isArray(items) || !items.length) {
+    wrap.innerHTML = `<div class="col-12 text-muted">No announcements.</div>`;
+    return;
+  }
+  const now = new Date();
+  wrap.innerHTML = items
+    .filter(a => {
+      const startOk = !a.start || new Date(a.start) <= now;
+      const endOk = !a.end || new Date(a.end) >= now;
+      return startOk && endOk;
+    })
+    .sort((a,b) => ((b.pin?1:0)-(a.pin?1:0)) || (new Date(b.start||0) - new Date(a.start||0)))
+    .map(a => `
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="card announcement h-100">
+          <div class="card-body">
+            <div class="d-flex align-items-start justify-content-between">
+              <h3 class="h6 m-0">${escapeHTML(a.title || "Announcement")}</h3>
+              ${a.pin ? '<span class="badge text-bg-light badge-pin">Pinned</span>' : ''}
+            </div>
+            ${a.date ? `<div class="text-muted small mt-1">${escapeHTML(a.date)}</div>` : ''}
+            <p class="mt-2 mb-0">${escapeHTML(a.body || "")}</p>
+          </div>
+        </div>
+      </div>
+    `).join("");
+}
+
+function renderGallery(items) {
+  const g = document.getElementById("gallery");
+  if (!Array.isArray(items) || !items.length) {
+    g.innerHTML = `<span class="text-muted">No images yet.</span>`;
+    return;
+  }
+  g.innerHTML = items.map(it => `
+    <img src="${encodeURI(it.src)}" alt="${escapeHTML(it.alt || "")}" title="${escapeHTML(it.caption || "")}">
+  `).join("");
+}
+
+function escapeHTML(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+}
