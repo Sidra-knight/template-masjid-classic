@@ -1,3 +1,3 @@
 [
-{ "src": "assets/logo.png", "alt": "Logo", "caption": "Our mosque", "featured": true }
+  { "src": "assets/logo.svg", "alt": "Masjid logo", "caption": "Our logo", "featured": false }
 ]
