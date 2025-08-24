@@ -1,2 +1,3 @@
-date,fajr_begin,fajr_jamaah,sunrise,dhuhr_begin,dhuhr_jamaah,asr_begin,asr_jamaah,maghrib_begin,maghrib_jamaah,isha_begin,isha_jamaah
-2025-08-21,04:12,04:45,05:52,13:10,13:30,17:10,17:30,20:25,20:27,21:45,21:55
+date,fajr,sunrise,dhuhr,asr,maghrib,isha,jummah1,jummah2
+2025-08-24,04:20,05:58,13:12,17:01,20:18,21:29,13:15,14:00
+2025-08-25,04:22,06:00,13:12,17:00,20:16,21:27,13:15,14:00
