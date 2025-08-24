@@ -1,53 +1,50 @@
-// prayers.js — API + CSV fallback (no secrets)
-const row = rows.find(r => r.date === y);
-if (!row) throw new Error('No row for today');
-return {
-source: 'csv',
-date: y,
-timings: {
-Fajr: row.fajr_begin,
-Sunrise: row.sunrise,
-Dhuhr: row.dhuhr_begin,
-Asr: row.asr_begin,
-Maghrib: row.maghrib_begin,
-Isha: row.isha_begin
-},
-jamaah: {
-Fajr: row.fajr_jamaah,
-Dhuhr: row.dhuhr_jamaah,
-Asr: row.asr_jamaah,
-Maghrib: row.maghrib_jamaah,
-Isha: row.isha_jamaah
-}
-};
-}
+async function loadTodayFromCSV(csvPath) {
+  const text = await fetchText(csvPath);
+  const rows = parseCSV(text);
+  const today = fmtDateISO();
+  // Accept date as YYYY-MM-DD or DD/MM/YYYY
+  const row = rows.find(r => {
+    const raw = (r.date || r.Date || "").trim();
+    if (!raw) return false;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw === today;
+    const m = raw.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (m) {
+      const iso = `${m[3]}-${m[2]}-${m[1]}`;
+      return iso === today;
+    }
+    return false;
+  });
+  if (!row) return null;
 
-
-async function getApiTimes(cfg) {
-const school = cfg.madhab === 'Hanafi' ? 1 : 0;
-const url = `https://api.aladhan.com/v1/timings?latitude=${cfg.location.lat}&longitude=${cfg.location.lng}&method=${encodeURIComponent(cfg.calculation_method)}&school=${school}&timezonestring=${encodeURIComponent(cfg.timezone)}`;
-const res = await fetch(url);
-const data = await res.json();
-const t = data.data.timings;
-const date = data.data.date.readable;
-return {
-source: 'api',
-date,
-timings: { Fajr: t.Fajr, Sunrise: t.Sunrise, Dhuhr: t.Dhuhr, Asr: t.Asr, Maghrib: t.Maghrib, Isha: t.Isha },
-jamaah: null
-};
+  return {
+    fajr: row.fajr || row.Fajr || "",
+    sunrise: row.sunrise || row.Sunrise || "",
+    dhuhr: row.dhuhr || row.Dhuhr || "",
+    asr: row.asr || row.Asr || "",
+    maghrib: row.maghrib || row.Maghrib || "",
+    isha: row.isha || row.Isha || "",
+    jummah1: row.jummah1 || row.Jummah1 || row.jummah || row.Jummah || "",
+    jummah2: row.jummah2 || row.Jummah2 || ""
+  };
 }
 
-
-export async function getPrayerData() {
-const cfg = await loadJSON('data/config.json');
-const useCsv = await headExists('data/timetable.csv');
-try {
-const result = useCsv ? await getCsvTimes('data/timetable.csv', cfg.timezone) : await getApiTimes(cfg);
-return { cfg, ...result };
-} catch (e) {
-console.error(e);
-const api = await getApiTimes(cfg); // fallback on failure
-return { cfg, ...api };
-}
+function renderPrayerTimes(times) {
+  const row = document.getElementById("prayer-row");
+  if (!times) {
+    row.innerHTML = `<tr><td colspan="6" class="text-muted">No timetable entry for today.</td></tr>`;
+    return;
+  }
+  row.innerHTML = `
+    <tr>
+      <td>${times.fajr || "-"}</td>
+      <td>${times.sunrise || "-"}</td>
+      <td>${times.dhuhr || "-"}</td>
+      <td>${times.asr || "-"}</td>
+      <td>${times.maghrib || "-"}</td>
+      <td>${times.isha || "-"}</td>
+    </tr>
+  `;
+  const j = document.getElementById("jummah-times");
+  const list = [times.jummah1, times.jummah2].filter(Boolean);
+  j.textContent = list.length ? `Jumu’ah: ${list.join(" & ")}` : "";
 }
