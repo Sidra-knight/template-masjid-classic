@@ -1,12 +1,14 @@
 (async function () {
   try {
     const cfg = await fetchJSON("data/config.json");
+
     // Brand
     document.getElementById("site-title").textContent = cfg.name || "Masjid";
     document.getElementById("brand-name").textContent = cfg.name || "Masjid";
     if (cfg.brand && cfg.brand.logo) {
-      document.getElementById("brand-logo").src = cfg.brand.logo; // relative path like assets/logo.svg
+      document.getElementById("brand-logo").src = cfg.brand.logo; // e.g. assets/logo.svg
     }
+
     // Contacts & links
     if (cfg.contacts?.email) {
       const el = document.getElementById("contact-email");
@@ -26,23 +28,25 @@
       el.href = cfg.links.donate;
     }
     document.getElementById("address").textContent = cfg.address || "";
-    document.getElementById("foot-contact").textContent = cfg.contacts?.email || cfg.contacts?.phone || "";
 
-    // Today label
-    const today = new Date();
-    const fmt = today.toLocaleDateString(cfg.timezone || "Europe/London", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
-    document.getElementById("today-label").textContent = fmt;
+    // Today label — safe against bad tz
+    document.getElementById("today-label").textContent = formatTodaySafe(cfg.timezone);
 
-    // Announcements
+    // Announcements (safe)
     const anns = await fetchJSON("data/announcements.json").catch(() => []);
     renderAnnouncements(anns);
 
-    // Gallery
+    // Gallery (safe)
     const gallery = await fetchJSON("data/gallery.json").catch(() => []);
     renderGallery(gallery);
 
-    // Prayer times (CSV-driven)
-    const times = await loadTodayFromCSV("data/timetable.csv");
+    // Prayer times CSV (safe)
+    let times = null;
+    try {
+      times = await loadTodayFromCSV("data/timetable.csv");
+    } catch (e) {
+      console.warn("timetable.csv missing or invalid:", e);
+    }
     renderPrayerTimes(times);
   } catch (e) {
     console.error(e);
@@ -86,8 +90,18 @@ function renderGallery(items) {
     return;
   }
   g.innerHTML = items.map(it => `
-    <img src="${encodeURI(it.src)}" alt="${escapeHTML(it.alt || "")}" title="${escapeHTML(it.caption || "")}">
+    <img src="${encodeURI(it.src)}" alt="${escapeHTML(it.alt || "")}" title="${escapeHTML(it.caption || "")}" style="height:96px;width:auto;border-radius:.5rem">
   `).join("");
+}
+
+function formatTodaySafe(tz) {
+  const opts = { weekday: "long", year: "numeric", month: "long", day: "numeric" };
+  try {
+    if (tz) return new Intl.DateTimeFormat("en-GB", { ...opts, timeZone: tz }).format(new Date());
+  } catch (e) {
+    console.warn("Invalid timezone in config:", tz);
+  }
+  return new Intl.DateTimeFormat(undefined, opts).format(new Date());
 }
 
 function escapeHTML(s) {
