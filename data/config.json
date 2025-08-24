@@ -1,11 +1,13 @@
 {
-"name": "Example Mosque",
-"address": "123 High St, Town, AB1 2CD",
-"timezone": "Europe/London",
-"location": { "lat": 51.5074, "lng": -0.1278 },
-"calculation_method": "MWL",
-"madhab": "Hanafi",
-"jummah_times": ["13:15", "14:00"],
-"contacts": { "phone": "+44 20 1234 5678", "email": "info@example.org" },
-"brand": { "primary": "#0d6efd", "accent": "#198754", "logo": "assets/logo.png" }
+  "name": "Masjid Example",
+  "timezone": "Europe/London",
+  "address": "123 High St, London",
+  "location": { "lat": 51.5074, "lng": -0.1278 },
+  "calculation_method": "MWL",
+  "madhab": "Hanafi",
+  "jummah_times": ["13:15", "14:00"],
+  "contacts": { "phone": "", "email": "" },
+  "links": { "donate": "" },
+  "brand": { "logo": "assets/logo.svg" },
+  "admins": ["you@example.org"]
 }
