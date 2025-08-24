@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Masjid logo">
+  <title>Masjid Logo</title>
+  <defs>
+    <style>
+      .c { stroke:#166534; fill:none; stroke-width:14; stroke-linecap:round; stroke-linejoin:round; }
+      .f { fill:#166534; }
+    </style>
+  </defs>
+  <rect x="116" y="116" width="280" height="280" rx="22" ry="22" class="c"/>
+  <g transform="rotate(45 256 256)">
+    <rect x="156" y="156" width="200" height="200" rx="20" ry="20" class="c"/>
+  </g>
+  <g>
+    <path d="M394 208 L394 350" class="c"/>
+    <path d="M382 208 L406 208 L394 188 Z" class="f"/>
+  </g>
+  <path d="M136 322 Q256 198 376 322 L376 368 L136 368 Z" class="c"/>
+  <path d="M236 368 L236 330 Q256 314 276 330 L276 368" class="c"/>
+</svg>
