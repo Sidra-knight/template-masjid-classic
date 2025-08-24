@@ -1,0 +1,6 @@
+:root { --brand: #166534; }
+.navbar-brand span { color: var(--brand); }
+header .table th { white-space: nowrap; }
+#gallery img { height: 96px; width: auto; border-radius: .5rem; }
+.card.announcement { border-radius: 1rem; }
+.badge-pin { background: var(--brand); }
