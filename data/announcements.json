@@ -1,3 +1,9 @@
 [
-{ "id": "welcome", "title": "Welcome", "body": "Assalamu alaikum!", "pin": true }
+  {
+    "id": "welcome",
+    "title": "Welcome to our masjid website",
+    "body": "This is a sample announcement. Replace me in /data/announcements.json.",
+    "start": "2025-01-01",
+    "pin": true
+  }
 ]
